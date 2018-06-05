@@ -21,12 +21,12 @@ long FLASH_COLOR, SPIN_COLOR,CYLON_COLOR;
 // Use 0x000000 if you want a blank space.
 uint32_t rainbowColors[] = {
   0xFF0000,   
-  0xFF5500,
-  0xFFFF00,
+  0xFF7700,
+  0xFFDD00,
   0x00FF00,
   0x0000FF,
-  0xFF00FF,
-  0x000000,
+  0x8A2BE2,
+  0xC77DF3,
   0x000000,
   0x000000,
   0x000000
@@ -257,52 +257,28 @@ void setup() {
  
 ///////////////////////////////////////////////////////////////////////////////
 void loop() {
-  int cnt = 0;
-  while (CircuitPlayground.motionZ() > 0) {
-    unsigned long startTime = millis(); // Capture current time
-    while(millis() - startTime < 5000) // Loop for 5 seconds
-    {
-      cnt++; // Increment counter
-      delay(1000); // Wait for 10 microseconds to avoid bouncing switch issue
-    }
-    
-    
-  };
-  Serial.println(cnt);
-  // Time is up
-  if(cnt == 500)
-  {
-     playHB();
+  int randNumber = random(5);
+  switch (randNumber) {
+    case 0:
+      flasher();
+      break;
+    case 1:
+      spinner();
+      break;
+    case 2:
+      cylon();
+      break;
+    case 3:
+      bedazzler();
+      break;
+    case 4:
+      rainbow();
+      break;
   }
- 
-  // A little debounce
-  delay(500);
-  if (isEasterEgg()) {
-    playHB ();
-  } else {
-    int randNumber = random(5);
-    switch (randNumber) {
-      case 0:
-        flasher();
-        break;
-      case 1:
-        spinner();
-        break;
-      case 2:
-        cylon();
-        break;
-      case 3:
-        bedazzler();
-        break;
-      case 4:
-        rainbow();
-        break;
-    }
-    tapDetected = false;
-    delay(250);
-    
-    // TODO: add your animation here!
-  }
+  tapDetected = false;
+  delay(250);
+  
+  // TODO: add your animation here!
 }
 
 
