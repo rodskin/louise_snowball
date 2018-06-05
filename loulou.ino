@@ -1,4 +1,5 @@
 #include <Adafruit_CircuitPlayground.h>
+#include "pitches.h"
 
 #define BRIGHTNESS      10
 #define ROLL_THRESHOLD  30 // Total acceleration threshold for roll detect
@@ -13,9 +14,7 @@
  
 // Change these to be whatever color you want
 // Use color picker to come up with hex values
-#define FLASH_COLOR   0xFF0000
-#define SPIN_COLOR    0xFF0000
-#define CYLON_COLOR   0xFF0000
+long FLASH_COLOR, SPIN_COLOR,CYLON_COLOR;
  
 // Define 10 colors here.
 // Must be 10 entries.
@@ -34,10 +33,36 @@ uint32_t rainbowColors[] = {
 };
 
 float X, Y, Z, totalAccel, tapDetected;
+
+// Melody notes:
+int melody[]= {NOTE_G3, NOTE_G3, NOTE_A3, NOTE_G3, NOTE_C4, NOTE_B3,
+NOTE_G3,NOTE_G3, NOTE_A3,NOTE_G3, NOTE_D4, NOTE_C4,
+NOTE_G3, NOTE_G3, NOTE_G4,NOTE_E4,NOTE_C4, NOTE_B3, NOTE_A3,
+NOTE_F4, NOTE_F4, NOTE_E4, NOTE_C4, NOTE_D4, NOTE_C4 };
+
+// note durations: 4 = quarter note, 8 = eighth note, etc.:
+int noteDurations[] = { 8,8,4,4,4,2,8,8,4,4,4,2,8,8,4,4,4,4,3,8,8,4,4,4,2 };
  
 ///////////////////////////////////////////////////////////////////////////////
 bool buttonsPressed() {
   return CircuitPlayground.leftButton() | CircuitPlayground.rightButton();  
+}
+
+///////////////////////////////////////////////////////////////////////////////
+bool switchNext() {
+  return CircuitPlayground.leftButton() | CircuitPlayground.rightButton() | ballShaked() | tapCallback();  
+}
+
+///////////////////////////////////////////////////////////////////////////////
+bool isEasterEgg() {
+  return false;  
+}
+
+long randomColor () {
+  int R_color = random(256);
+  int G_color = random(256);
+  int B_color = random(256);
+  return (R_color * 0x10000 + G_color * 0x100 + B_color);
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -66,13 +91,14 @@ bool ballShaked() {
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-void tapCallback() {
+bool tapCallback() {
   tapDetected = true;
 }
  
 ///////////////////////////////////////////////////////////////////////////////
 void flasher() {
-  while (!buttonsPressed()) {
+  FLASH_COLOR = randomColor();
+  while (!switchNext()) {
     // Turn on all the pixels to FLASH_COLOR
     for (int pixel=0; pixel<10; pixel++) {
       CircuitPlayground.setPixelColor(pixel, FLASH_COLOR);    
@@ -94,8 +120,8 @@ void spinner() {
   // Can be any two pixels
   int pixel1 = 0;
   int pixel2 = 5;
-    
-  while (!buttonsPressed()) {
+  SPIN_COLOR = randomColor();
+  while (!switchNext()) {
     // Turn off all the NeoPixels
     CircuitPlayground.clearPixels();
   
@@ -120,8 +146,8 @@ void spinner() {
 void cylon() {
   int pixel1 = 0;
   int pixel2 = 9;
-  
-  while (!buttonsPressed()) {
+  CYLON_COLOR = randomColor();
+  while (!switchNext()) {
     // Scan in one direction
     for (int step=0; step<4; step++) {
       CircuitPlayground.clearPixels();
@@ -152,7 +178,7 @@ void cylon() {
  
 ///////////////////////////////////////////////////////////////////////////////
 void bedazzler() {
-  while (!ballShaked() && !tapDetected) {
+  while (!switchNext()) {
     // Turn off all the NeoPixels
     CircuitPlayground.clearPixels();
   
@@ -174,7 +200,7 @@ void rainbow() {
   int startIndex = 0;
   int colorIndex;
  
-  while (!ballShaked() && !tapDetected) {
+  while (!switchNext()) {
     // Turn off all the NeoPixels
     CircuitPlayground.clearPixels();
   
@@ -196,9 +222,25 @@ void rainbow() {
     delay(CHASE_RATE);
   }
 }
+
+void playHB () {
+  for (int thisNote = 0; thisNote < 26; thisNote++) {
+        
+    int noteDuration = 1000/noteDurations[thisNote];
+    // to calculating note duration  (1 second divided by the note type)
+    
+    CircuitPlayground.playTone(melody[thisNote],noteDuration);
+    // to distinguish the notes, set a minimum time between them.
+    
+    int pauseBetweenNotes = noteDuration * 1.60;
+    delay(pauseBetweenNotes);
+    noTone(8);
+  }   
+}
  
 ///////////////////////////////////////////////////////////////////////////////
 void setup() {
+  Serial.begin(9600);
   CircuitPlayground.begin();
 
   CircuitPlayground.setAccelRange(LIS3DH_RANGE_8_G);
@@ -209,14 +251,59 @@ void setup() {
   
   // Make it bright!
   CircuitPlayground.setBrightness(BRIGHTNESS);
+  randomSeed(analogRead(0));
+  
 }
  
 ///////////////////////////////////////////////////////////////////////////////
 void loop() {
-  //flasher();    delay(250);
-  //spinner();    delay(250);
-  //cylon();      delay(250);
-  bedazzler();  tapDetected = false; delay(250);
-  rainbow();    tapDetected = false; delay(250);
-  // TODO: add your animation here!
+  int cnt = 0;
+  while (CircuitPlayground.motionZ() > 0) {
+    unsigned long startTime = millis(); // Capture current time
+    while(millis() - startTime < 5000) // Loop for 5 seconds
+    {
+      cnt++; // Increment counter
+      delay(1000); // Wait for 10 microseconds to avoid bouncing switch issue
+    }
+    
+    
+  };
+  Serial.println(cnt);
+  // Time is up
+  if(cnt == 500)
+  {
+     playHB();
+  }
+ 
+  // A little debounce
+  delay(500);
+  if (isEasterEgg()) {
+    playHB ();
+  } else {
+    int randNumber = random(5);
+    switch (randNumber) {
+      case 0:
+        flasher();
+        break;
+      case 1:
+        spinner();
+        break;
+      case 2:
+        cylon();
+        break;
+      case 3:
+        bedazzler();
+        break;
+      case 4:
+        rainbow();
+        break;
+    }
+    tapDetected = false;
+    delay(250);
+    
+    // TODO: add your animation here!
+  }
 }
+
+
+// r * 0x10000 + v * 0x100 + b
