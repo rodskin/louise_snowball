@@ -246,6 +246,7 @@ void setup() {
   CircuitPlayground.setAccelRange(LIS3DH_RANGE_8_G);
   CircuitPlayground.setAccelTap(2, TAP_THRESHOLD);
   attachInterrupt(digitalPinToInterrupt(7), tapCallback, FALLING);
+  attachInterrupt(digitalPinToInterrupt(7), ballShaked, FALLING);
  
   tapDetected = false;
   
@@ -280,6 +281,3 @@ void loop() {
   
   // TODO: add your animation here!
 }
-
-
-// r * 0x10000 + v * 0x100 + b
