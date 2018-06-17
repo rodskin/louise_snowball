@@ -65,6 +65,10 @@ long randomColor () {
   return (R_color * 0x10000 + G_color * 0x100 + B_color);
 }
 
+int randomRate () {
+  return random(30, 101);
+}
+
 ///////////////////////////////////////////////////////////////////////////////
 bool ballShaked() {
     // Compute total acceleration
